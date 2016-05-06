@@ -1,0 +1,18 @@
+{
+    "name": "sincco/login",
+    "description": "Login structure for users",
+    "license": "MIT",
+    "keywords": ["login","user","sincco"],
+    "version": "1.0",
+    "authors": [
+        {
+            "name": "Ivan Miranda",
+            "email": "ivan.miranda@sincco.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Sincco\\Login\\": "src"
+        }
+    }
+}
