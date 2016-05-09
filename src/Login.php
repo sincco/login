@@ -30,6 +30,16 @@ final class Login extends \stdClass {
     }
 
     /**
+     * Logout 
+     * @return none
+     */
+    public static function logout() {
+        if(!self::$instance instanceof self)
+            self::$instance = new self();
+        self::$instance->endSession();
+    }
+
+    /**
      * Checks if user is logged
      * @return mixed           FALSE if not logged, user data if logged
      */
@@ -89,6 +99,25 @@ final class Login extends \stdClass {
                 ':user_email'=>$userData['email'],
                 ':user_password'=>$userData['password'] );
             return $query->execute( $data );
+        } catch (\PDOException $err) {
+            return FALSE;
+        }
+    }
+
+    public static function editUser( $userData ) {
+        if(!self::$instance instanceof self)
+            self::$instance = new self();
+        if( !self::$instance->verifyTableExists() )
+            if ( !self::$instance->createTable() )
+                return FALSE;
+        $id = intval( array_shift( array_shift( self::$instance->nextUserId() ) ) ) + 1;
+        $userData[ 'password' ] = self::$instance->createPasswordHash( $userData[ 'password' ] );
+        try {
+            $sql = 'UPDATE __usersControl 
+                SET userPassword=\'' . $userData[ 'password' ] . '\', userEmail=\'' . $userData[ 'email' ] . '\'
+                WHERE userName=\'' . $userData[ 'user' ] . '\' OR userEmail=\'' . $userData[ 'user' ] . '\'';
+            $query = self::$dbConnection->prepare($sql);
+            return $query->execute();
         } catch (\PDOException $err) {
             return FALSE;
         }
@@ -172,7 +201,8 @@ final class Login extends \stdClass {
             userId int not null,
             userName varchar(150) not null primary key,
             userEmail varchar(150),
-            userPassword varchar(60)
+            userPassword varchar(60),
+            userStatus char(1)
         )';
         try {
             $query = self::$dbConnection->prepare($sql);
@@ -189,6 +219,14 @@ final class Login extends \stdClass {
      */
     private function startSession() {
         if(session_status() == PHP_SESSION_NONE) session_start();
+    }
+
+    /**
+     * Ends a session
+     * @return none
+     */
+    private function endSession() {
+        session_destroy();
     }
 
     /**
