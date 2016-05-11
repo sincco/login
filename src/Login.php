@@ -129,12 +129,12 @@ final class Login extends \stdClass {
      * @return array       User Data
      */
     public static function getUser($user) {
-        $sql = 'SELECT userName, userEmail, userPassword
+        $sql = "SELECT userName, userEmail, userPassword
             FROM __usersControl
-            WHERE userName = :user OR userEmail = :user
-            LIMIT 1';
+            WHERE userName = '{$user}' OR userEmail = '{$user}'
+            LIMIT 1";
         $query = self::$dbConnection->prepare($sql);
-        $query->execute(array(':user', $user));
+        $query->execute();
         return $query->fetchAll(\PDO::FETCH_ASSOC);
     }
 
