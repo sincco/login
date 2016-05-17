@@ -12,7 +12,7 @@
 # Control for valid user data on app
 # -----------------------
 
-namespace Sincco\Login;
+namespace Sincco;
 
 final class Login extends \stdClass {
     private static $instance;
