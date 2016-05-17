@@ -2,7 +2,7 @@
     "name": "sincco/login",
     "description": "Login structure for users",
     "license": "MIT",
-    "keywords": ["login","user","sincco"],
+    "keywords": ["login","user","sfphp","sincco"],
     "version": "1.0",
     "authors": [
         {
