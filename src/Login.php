@@ -129,7 +129,7 @@ final class Login extends \stdClass {
      * @return array       User Data
      */
     public static function getUser($user) {
-        $sql = "SELECT userName, userEmail, userPassword
+        $sql = "SELECT userId, userName, userEmail, userPassword
             FROM __usersControl
             WHERE userName = '{$user}' OR userEmail = '{$user}'
             LIMIT 1";
