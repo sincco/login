@@ -88,7 +88,10 @@ final class Login extends \stdClass {
         if( !self::$instance->verifyTableExists() )
             if ( !self::$instance->createTable() )
                 return FALSE;
-        $id = intval( array_shift( array_shift( self::$instance->nextUserId() ) ) ) + 1;
+        $id = self::$instance->nextUserId();
+        $id = array_shift($id);
+        $id = array_shift($id);
+        $id = intval($id) + 1;
         $userData['password'] = self::$instance->createPasswordHash( $userData['password'] );
         try {
             $sql = 'INSERT INTO __usersControl (userId,userName, userPassword, userEmail)
@@ -98,7 +101,11 @@ final class Login extends \stdClass {
                 ':user_name'=>$userData['user'],
                 ':user_email'=>$userData['email'],
                 ':user_password'=>$userData['password'] );
-            return $query->execute( $data );
+            if ($query->execute( $data )){
+                return $id;
+            } else {
+                return false;
+            }
         } catch (\PDOException $err) {
             return FALSE;
         }
@@ -110,12 +117,17 @@ final class Login extends \stdClass {
         if( !self::$instance->verifyTableExists() )
             if ( !self::$instance->createTable() )
                 return FALSE;
-        $id = intval( array_shift( array_shift( self::$instance->nextUserId() ) ) ) + 1;
         $userData[ 'password' ] = self::$instance->createPasswordHash( $userData[ 'password' ] );
         try {
-            $sql = 'UPDATE __usersControl 
-                SET userPassword=\'' . $userData[ 'password' ] . '\', userEmail=\'' . $userData[ 'email' ] . '\'
-                WHERE userName=\'' . $userData[ 'user' ] . '\' OR userEmail=\'' . $userData[ 'user' ] . '\'';
+            if($userData[ 'password' ] == '') {
+                $sql = 'UPDATE __usersControl 
+                    SET userEmail=\'' . $userData[ 'email' ] . '\'
+                    WHERE userName=\'' . $userData[ 'user' ] . '\' OR userEmail=\'' . $userData[ 'user' ] . '\'';
+            } else {
+                $sql = 'UPDATE __usersControl 
+                    SET userPassword=\'' . $userData[ 'password' ] . '\', userEmail=\'' . $userData[ 'email' ] . '\'
+                    WHERE userName=\'' . $userData[ 'user' ] . '\' OR userEmail=\'' . $userData[ 'user' ] . '\'';
+            }
             $query = self::$dbConnection->prepare($sql);
             return $query->execute();
         } catch (\PDOException $err) {
