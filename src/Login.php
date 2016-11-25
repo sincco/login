@@ -14,6 +14,8 @@
 
 namespace Sincco\Tools;
 
+use Sincco\Tools\Tokenizer;
+
 final class Login extends \stdClass {
     private static $instance;
     private static $dbData;
@@ -21,9 +23,9 @@ final class Login extends \stdClass {
 
     /**
      * Sets data base information connection for the instance
-     * @param array $data Database connecion ( host, user, password, dbname, type )
+     * @param array $data Database connecion (host, user, password, dbname, type)
      */
-    public static function setDatabase( $data ) {
+    public static function setDatabase($data) {
         if(!self::$instance instanceof self)
             self::$instance = new self();
         self::$dbData = $data;
@@ -49,9 +51,9 @@ final class Login extends \stdClass {
     // Start a session (if has not been started)
         self::$instance->startSession();
     // If exists user's data in session then is logged
-        if( isset( $_SESSION['sincco\login\controller'] ) ) {
+        if(isset($_SESSION['sincco\login\controller'])) {
             self::$instance->startSession();
-            return unserialize( $_SESSION['sincco\login\controller'] );
+            return unserialize($_SESSION['sincco\login\controller']);
         }
         else
             return FALSE;
@@ -59,20 +61,22 @@ final class Login extends \stdClass {
 
     /**
      * Attemps a user login
-     * @param  array $userData User data ( user/email, password)
+     * @param  array $userData User data (user/email, password)
      * @return mixed           FALSE if not logged, user data if logged
      */
-    public static function login( $userData ) {
-        if( !self::$instance->verifyTableExists() )
-            if ( !self::$instance->createTable() )
+    public static function login($userData) {
+        if(!self::$instance->verifyTableExists())
+            if (!self::$instance->createTable())
                 return FALSE;
         $response = self::$instance->getUser($userData['user']);
-        if( $response ) {
+        if($response) {
             $response = array_shift($response);
-            if( password_verify( $userData['password'], $response['userPassword'] ) ) {
-                $_SESSION['sincco\login\controller'] = serialize( $response );
-            } else 
+            if(password_verify($userData['password'], $response['userPassword'])) {
+                $_SESSION['sincco\login\controller'] = serialize($response);
+                $_SESSION['sincco\login\token'] = Tokenizer::create($response, APP_KEY, 180);
+            } else {
                 $response = FALSE;
+            }
         }
         return $response;
     }
@@ -82,26 +86,26 @@ final class Login extends \stdClass {
      * @param  array $userData User data (user,email,password)
      * @return boolean
      */
-    public static function createUser( $userData ) {
+    public static function createUser($userData) {
         if(!self::$instance instanceof self)
             self::$instance = new self();
-        if( !self::$instance->verifyTableExists() )
-            if ( !self::$instance->createTable() )
+        if(!self::$instance->verifyTableExists())
+            if (!self::$instance->createTable())
                 return FALSE;
         $id = self::$instance->nextUserId();
         $id = array_shift($id);
         $id = array_shift($id);
         $id = intval($id) + 1;
-        $userData['password'] = self::$instance->createPasswordHash( $userData['password'] );
+        $userData['password'] = self::$instance->createPasswordHash($userData['password']);
         try {
             $sql = 'INSERT INTO __usersControl (userId,userName, userPassword, userEmail)
                 VALUES(:user_id, :user_name, :user_password, :user_email)';
             $query = self::$dbConnection->prepare($sql);
-            $data = array( ':user_id'=>$id,
+            $data = array(':user_id'=>$id,
                 ':user_name'=>$userData['user'],
                 ':user_email'=>$userData['email'],
-                ':user_password'=>$userData['password'] );
-            if ($query->execute( $data )){
+                ':user_password'=>$userData['password']);
+            if ($query->execute($data)){
                 return $id;
             } else {
                 return false;
@@ -111,13 +115,13 @@ final class Login extends \stdClass {
         }
     }
 
-    public static function editUser( $userData ) {
+    public static function editUser($userData) {
         if(!self::$instance instanceof self)
             self::$instance = new self();
-        if( !self::$instance->verifyTableExists() )
-            if ( !self::$instance->createTable() )
+        if(!self::$instance->verifyTableExists())
+            if (!self::$instance->createTable())
                 return FALSE;
-        $userData[ 'password' ] = self::$instance->createPasswordHash( $userData[ 'password' ] );
+        $userData[ 'password' ] = self::$instance->createPasswordHash($userData[ 'password' ]);
         try {
             if($userData[ 'password' ] == '') {
                 $sql = 'UPDATE __usersControl 
@@ -179,7 +183,7 @@ final class Login extends \stdClass {
      * @return string           Hash for password
      */
     private function createPasswordHash($password) {
-        if( function_exists( 'password_hash' ) ) {
+        if(function_exists('password_hash')) {
             $opciones = [ 'cost' => 12, ];
             return password_hash($password, PASSWORD_BCRYPT, $opciones);
         }
@@ -215,7 +219,7 @@ final class Login extends \stdClass {
             userEmail varchar(150),
             userPassword varchar(60),
             userStatus char(1)
-        )';
+       )';
         try {
             $query = self::$dbConnection->prepare($sql);
             $query->execute();
@@ -267,7 +271,7 @@ final class Login extends \stdClass {
                     $parametros = array(
                     \PDO::FB_ATTR_TIMESTAMP_FORMAT,"%d-%m-%Y",
                     \PDO::FB_ATTR_DATE_FORMAT ,"%d-%m-%Y"
-                    );
+                   );
                     self::$dbConnection = new \PDO(self::$dbData["type"].":dbname=".self::$dbData["host"].self::$dbData["dbname"], self::$dbData["user"], self::$dbData['password'], $parametros);
                 break;
                 default:
@@ -279,12 +283,12 @@ final class Login extends \stdClass {
             self::$dbConnection->setAttribute(\PDO::ATTR_EMULATE_PREPARES, false);
             return TRUE;
         } catch (\PDOException $err) {
-            $errorInfo = sprintf( '%s: %s in %s on line %s.',
+            $errorInfo = sprintf('%s: %s in %s on line %s.',
                 'Database Error',
                 $err,
                 $err->getFile(),
                 $err->getLine()
-            );
+           );
             return FALSE;
         }
     }
@@ -312,7 +316,7 @@ final class Login extends \stdClass {
             && strlen($_POST['user_password_new']) >= 6
             && !empty($_POST['user_password_repeat'])
             && ($_POST['user_password_new'] === $_POST['user_password_repeat'])
-        ) {
+       ) {
             // only this case return TRUE, only this case is valid
             return TRUE;
         } elseif (empty($_POST['user_name'])) {
